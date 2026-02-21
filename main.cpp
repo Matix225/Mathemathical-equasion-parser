@@ -4,10 +4,14 @@
 #define OPERAND     2
 #define NEGATION    3
 
+#define PRIORITY_LEVEL1     1
+#define PRIORITY_LEVEL2     2
+
 using namespace std;
 
 struct token{
     int type; //number, operator or negation
+    int priority; //only for operators
     string data;
 };
 vector <token> tokens;
@@ -20,6 +24,7 @@ void make_tokens(string eq){
 
         if(eq[i] == '+'){
             t.type = OPERATOR;
+            t.priority = PRIORITY_LEVEL1;
             t.data = "+";
             tokens.push_back(t);
         }
@@ -41,17 +46,20 @@ void make_tokens(string eq){
             }
             else{
                 t.type = OPERATOR;
+                t.priority = PRIORITY_LEVEL1;
                 t.data = "-";
                 tokens.push_back(t);
             }
         }
         else if(eq[i] == '*'){
             t.type = OPERATOR;
+            t.priority = PRIORITY_LEVEL2;
             t.data = '*';
             tokens.push_back(t);
         }
         else if(eq[i] == '/'){
             t.type = OPERATOR;
+            t.priority = PRIORITY_LEVEL2;
             t.data = '/';
             tokens.push_back(t);
         }
@@ -87,8 +95,8 @@ void make_tokens(string eq){
         }
     }
 
-    for(int i = 0; i < tokens.size(); i++)
-        cout<<tokens[i].data<<"\n";
+    //for(int i = 0; i < tokens.size(); i++)
+        //cout<<tokens[i].data;
 }
 void parse_equasion(){
     bool expected = false; //at the begining we expect token to be a number
@@ -97,7 +105,7 @@ void parse_equasion(){
             if(tokens[i].type == OPERAND)
                 expected = true;
             else{
-                cout<<"Parsing error 1!";
+                cout<<"Parsing error 1!\n";
                 return;
             }
         }
@@ -105,21 +113,63 @@ void parse_equasion(){
             if(tokens[i].type == OPERATOR)
                 expected = false;
             else{
-                cout<<"Parsing error 1!";
+                cout<<"Parsing error 1!\n";
                 return;
             }
         }
     }
 }
+vector<token> change_to_ONP(){
+    vector <token> res;
+    vector <token> stack;
+
+    for(int i = 0; i < tokens.size(); i++){
+        if(tokens[i].type == OPERATOR){
+            if(stack.empty())
+                stack.push_back(tokens[i]); //stack is empty we can just put an element there
+            else if(stack[stack.size()-1].priority < tokens[i].priority)
+                stack.push_back(tokens[i]); //last operator has lower priority so we have to execute first
+            else{
+                //there are some operators with greater priority. We have to pop them and then put current operator
+                while(!stack.empty()){
+                    if(stack[stack.size()-1].priority >= tokens[i].priority){
+                        res.push_back(stack[stack.size()-1]);
+                        stack.pop_back();
+                    }
+                    else{
+                        stack.push_back(tokens[i]);
+                        break;
+                    }
+                }
+            }
+        }
+        else
+            res.push_back(tokens[i]);
+    }
+
+    //if some operators left on the stack - add them to result
+    for(int i = stack.size()-1; i >= 0; i--){
+        res.push_back(stack[i]);
+        stack.pop_back();
+    }
+
+    return res;
+}
 
 void solve(string eq){
     make_tokens(eq);
+    parse_equasion();
+    
+    vector <token> ONP;
+    ONP = change_to_ONP();
+    /*for(int i = 0; i < ONP.size(); i++)
+        cout<<ONP[i].data<<" ";*/
 }
-
 int main(){
     //main loop of the program
     while(true){
         string equasion = "";
+        cout<<"Enter equasion: ";
         getline(cin, equasion);
 
         solve(equasion);
