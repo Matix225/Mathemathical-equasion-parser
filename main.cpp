@@ -9,6 +9,7 @@
 #define PRIORITY_LEVEL0     0
 #define PRIORITY_LEVEL1     1
 #define PRIORITY_LEVEL2     2
+#define PRIORITY_LEVEL3     3
 
 using namespace std;
 
@@ -37,14 +38,16 @@ bool make_tokens(string eq){
             //if before '-' was other operator then '-' is a number sign
             bool minus_type = false;
 
-            if(i == 0)
+            if(tokens.empty())
                 minus_type = true;
-            else if(tokens[tokens.size()-1].type == OPERATOR)
+            else if(tokens[tokens.size()-1].type == OPERATOR || tokens[tokens.size()-1].type == LEFT_PARENTH
+                || tokens[tokens.size()-1].type == NEGATION) 
                 minus_type = true;
 
             if(minus_type){
                 t.type = NEGATION;
-                t.data = "-";
+                t.priority = PRIORITY_LEVEL3;
+                t.data = "NEG";
                 tokens.push_back(t);
             }
             else{
@@ -81,9 +84,18 @@ bool make_tokens(string eq){
         else if(eq[i] >= '0' && eq[i] <= '9'){
             //now we have to build a number from the largest consecutive sequences of digits
             string number = "";
+            bool dot_appear = false;
             while(i < (int)eq.length()){
                 if(eq[i] >= '0' && eq[i] <= '9')
                     number += eq[i];
+                else if(eq[i] == '.'){
+                    if(dot_appear){
+                        cout<<"You can use only one dot in number!\n";
+                        return false;
+                    }
+                    dot_appear = true;
+                    number += eq[i];
+                }
                 else{
                     //we found a sign that should not be in number
                     i--; //in for loop we increment i. we want to start from current sign to create his token
@@ -92,17 +104,10 @@ bool make_tokens(string eq){
                 i++; //go to next char
             }
 
-            if(!tokens.empty() && tokens[tokens.size()-1].type == NEGATION){
-                tokens[tokens.size()-1].type = OPERAND; //we merged negation with number to get negated number
-                tokens[tokens.size()-1].priority = PRIORITY_LEVEL0;
-                tokens[tokens.size()-1].data += number;
-            }
-            else{
-                t.type = OPERAND;
-                t.priority = PRIORITY_LEVEL0;
-                t.data = number;
-                tokens.push_back(t);
-            }
+            t.type = OPERAND;
+            t.priority = PRIORITY_LEVEL0;
+            t.data = number;
+            tokens.push_back(t);
         }
         else if(eq[i] == ' ')
             continue;
@@ -165,6 +170,14 @@ bool parse_equasion(){
 
             expected = true; //now we expect operator or ')'
         }
+        else if(tokens[i].type == NEGATION){
+            if(expected){
+                cout<<"Unexpected negation!\n";
+                return false;
+            }
+
+            expected = false; //we are still waiting for number
+        }
     }
 
     if(parenth_diff != 0){//handle ex. ((1234 - 23 + 1 *2))) or ((1234 - (23 + 1)*2)
@@ -188,6 +201,24 @@ vector<token> change_to_ONP(){
                 //there are some operators with greater priority. We have to pop them and then put current operator
                 while(!stack.empty()){
                     if(stack[stack.size()-1].priority >= tokens[i].priority){
+                        res.push_back(stack[stack.size()-1]);
+                        stack.pop_back();
+                    }
+                    else 
+                        break;
+                }
+                stack.push_back(tokens[i]);
+            }
+        }
+        else if(tokens[i].type == NEGATION){
+            if(stack.empty())
+                stack.push_back(tokens[i]); //stack is empty we can just put an element there
+            else if(stack[stack.size()-1].priority <= tokens[i].priority)
+                stack.push_back(tokens[i]); //last operator has lower priority so we have to execute current token first
+            else{
+                //there are some operators with greater priority. We have to pop them and then put current operator
+                while(!stack.empty()){
+                    if(stack[stack.size()-1].priority > tokens[i].priority){
                         res.push_back(stack[stack.size()-1]);
                         stack.pop_back();
                     }
@@ -241,6 +272,11 @@ void calculate_ONP(vector <token> ONP){
                 }
                 stack.push_back(a / b);
             }
+        }
+        else if(ONP[i].type == NEGATION){
+            double a = stack[stack.size()-1];
+            stack.pop_back();
+            stack.push_back(-a);
         }
         else
             stack.push_back(stof(ONP[i].data));
