@@ -63,5 +63,5 @@ The ONP expression is evaluated using a stack:
 
 ---
 
-License
+## License
 This project is open-source and free to use for educational purposes.
