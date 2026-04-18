@@ -18,7 +18,6 @@ It supports arithmetic operations, parentheses, and unary negation, while also p
 - Syntax validation for incorrect expressions
 - Conversion from infix notation to ONP (RPN)
 - Evaluation using a stack-based algorithm
-- Interactive console input loop
 ---
 
 ##  Example Usage
