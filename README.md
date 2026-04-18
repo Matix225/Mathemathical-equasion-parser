@@ -1,4 +1,4 @@
-# Expression Parser
+# Mathemathical equasion parser
 
 This project is a mathematical expression parser and evaluator written in C++, which converts standard infix expressions into Reverse Polish Notation (RPN / ONP) and evaluates them using a stack-based approach.
 It supports arithmetic operations, parentheses, and unary negation, while also performing full syntax validation before evaluation.
