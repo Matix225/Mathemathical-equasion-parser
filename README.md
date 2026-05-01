@@ -62,6 +62,3 @@ The ONP expression is evaluated using a stack:
 - STL (`vector`, `string`, `iostream`)
 
 ---
-
-## License
-This project is open-source and free to use for educational purposes.
